@@ -1,0 +1,161 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "description": "API documentation for Video API",
+      "version": "1.0.0",
+      "title": "Video API"
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "tags": [
+      {
+        "name": "videos",
+        "description": "Operations about videos"
+      }
+    ],
+    "paths": {
+      "/videos/upload": {
+        "post": {
+          "tags": ["videos"],
+          "summary": "Upload a video",
+          "description": "Upload a video file",
+          "consumes": ["multipart/form-data"],
+          "parameters": [
+            {
+              "name": "video",
+              "in": "formData",
+              "description": "Video file to upload",
+              "required": true,
+              "type": "file"
+            }
+          ],
+          "responses": {
+            "201": {
+              "description": "Video uploaded successfully"
+            },
+            "400": {
+              "description": "Bad request"
+            },
+            "403": {
+              "description": "Forbidden"
+            }
+          }
+        }
+      },
+      "/videos/trim/{id}": {
+        "post": {
+          "tags": ["videos"],
+          "summary": "Trim a video",
+          "description": "Trim a previously uploaded video",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "ID of the video to trim",
+              "required": true,
+              "type": "integer"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "description": "Trim parameters",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startTime": { "type": "integer" },
+                  "endTime": { "type": "integer" }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "201": {
+              "description": "Video trimmed successfully"
+            },
+            "404": {
+              "description": "Video not found"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      },
+      "/videos/merge": {
+        "post": {
+          "tags": ["videos"],
+          "summary": "Merge videos",
+          "description": "Merge multiple video files",
+          "parameters": [
+            {
+              "name": "body",
+              "in": "body",
+              "description": "Merge parameters",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "201": {
+              "description": "Videos merged successfully"
+            },
+            "404": {
+              "description": "One or more videos not found"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      },
+      "/videos/share/{id}": {
+        "post": {
+          "tags": ["videos"],
+          "summary": "Generate a shareable link",
+          "description": "Generate a shareable link for a video with expiry",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "ID of the video to share",
+              "required": true,
+              "type": "integer"
+            },
+            {
+              "name": "body",
+              "in": "body",
+              "description": "Share parameters",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expiryTime": { "type": "integer" }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shareable link generated successfully"
+            },
+            "404": {
+              "description": "Video not found"
+            },
+            "500": {
+              "description": "Server error"
+            }
+          }
+        }
+      }
+    }
+  }
+  

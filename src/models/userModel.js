@@ -1,13 +1,33 @@
-// src/models/userModel.js
-const bcrypt = require('bcryptjs');
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: './database.sqlite'
+});
 
-const users = [];
+// Define the User model
+const User = sequelize.define('User', {
+  username: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  timestamps: false
+});
 
-const addUser = (username, password) => {
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  users.push({ username, password: hashedPassword });
-};
+// Sync database
+sequelize.sync();
 
-const findUser = (username) => users.find(user => user.username === username);
+async function addUser(username, password) {
+  return User.create({ username, password });
+}
+
+async function findUser(username) {
+  return User.findOne({ where: { username } });
+}
 
 module.exports = { addUser, findUser };

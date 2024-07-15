@@ -17,7 +17,7 @@ function mergeVideos(inputPaths, outputPath, callback) {
   require('fs').writeFileSync(fileListPath, fileListContent);
 
   const command = `ffmpeg -f concat -safe 0 -i ${fileListPath} -c copy ${outputPath}`;
-  exec(command, (err) => {
+  exec(command, (err) => { 
     require('fs').unlinkSync(fileListPath);
     callback(err);
   });

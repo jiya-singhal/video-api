@@ -3,9 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../models/videoModel');
 const { generateUniqueFilename, trimVideo, mergeVideos, getVideoDuration } = require('../utils/videoUtils');
+const jwt = require('jsonwebtoken');
 
 const UPLOAD_FOLDER = 'uploads';
 
+// Setup multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, UPLOAD_FOLDER);
@@ -27,6 +29,7 @@ const upload = multer({
   }
 }).single('video');
 
+// Upload video function
 const uploadVideo = (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -50,25 +53,24 @@ const uploadVideo = (req, res) => {
     } catch (error) {
       res.status(500).json({ error: 'Error processing video' });
     }
-  });const jwt = require('jsonwebtoken');
-
-  function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-  
-    if (token == null) return res.sendStatus(401);
-  
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-      if (err) return res.sendStatus(403);
-      req.user = user;
-      next();
-    });
-  }
-  
-  module.exports = authenticateToken;
-  
+  });
 };
 
+// Token authentication middleware
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
+
+// Trim uploaded video function
 const trimUploadedVideo = (req, res) => {
   const { id } = req.params;
   const { startTime, endTime } = req.body;
@@ -78,7 +80,7 @@ const trimUploadedVideo = (req, res) => {
       return res.status(404).json({ error: 'Video not found' });
     }
 
-    const outputPath = `./uploads/${generateUniqueFilename()}`;
+    const outputPath = path.join(UPLOAD_FOLDER, generateUniqueFilename() + path.extname(row.path));
     trimVideo(row.path, startTime, endTime, outputPath, (error) => {
       if (error) {
         return res.status(500).json({ error: 'Trimming error' });
@@ -94,6 +96,7 @@ const trimUploadedVideo = (req, res) => {
   });
 };
 
+// Merge uploaded videos function
 const mergeUploadedVideos = (req, res) => {
   const { ids } = req.body;
 
@@ -103,7 +106,7 @@ const mergeUploadedVideos = (req, res) => {
     }
 
     const inputPaths = rows.map(row => row.path);
-    const outputPath = `./uploads/${generateUniqueFilename()}`;
+    const outputPath = path.join(UPLOAD_FOLDER, generateUniqueFilename() + '.mp4');
     mergeVideos(inputPaths, outputPath, (error) => {
       if (error) {
         return res.status(500).json({ error: 'Merging error' });
@@ -121,6 +124,7 @@ const mergeUploadedVideos = (req, res) => {
   });
 };
 
+// Generate shareable link function
 const generateShareableLink = (req, res) => {
   const { id } = req.params;
   const { expiryTime } = req.body; // Assume expiryTime in seconds
@@ -141,15 +145,16 @@ const generateShareableLink = (req, res) => {
   });
 };
 
+// Get shared video function
 const getSharedVideo = (req, res) => {
-  const { token } = req.params;
+  const { id } = req.params;
 
-  db.get('SELECT * FROM videos WHERE expiry IS NOT NULL AND id = ?', [token], (err, row) => {
-    if (err || !row) {
+  db.get('SELECT * FROM videos WHERE expiry IS NOT NULL AND id = ?', [id], (err, row) => {
+    if (err || !row || new Date(row.expiry) < new Date()) {
       return res.status(404).json({ error: 'Video not found or expired' });
     }
     res.status(200).json({ path: row.path, expiryDate: row.expiry });
   });
 };
 
-module.exports = { uploadVideo, trimUploadedVideo, mergeUploadedVideos, generateShareableLink, getSharedVideo };
+module.exports = { uploadVideo, trimUploadedVideo, mergeUploadedVideos, generateShareableLink, getSharedVideo, authenticateToken };

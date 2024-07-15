@@ -1,0 +1,1 @@
+TEST_AUTH_TOKEN=static_test_token_123456
